@@ -30,7 +30,7 @@ def get_google_sheet():
     
     # Abre el archivo (CAMBIA 'NombreDeTuArchivo' POR EL NOMBRE REAL DE TU EXCEL)
     # Ejemplo: Si tu archivo se llama "Control Pagos 2026", pon eso.
-    archivo = client.open("Control Pagos 2026") 
+    archivo = client.open_by_key("1i2bjo43U23-2wxtCBmc0jYeR3Vps5nl29cm-6lsRRjM")
     
     try:
         worksheet = archivo.worksheet(nombre_hoja)

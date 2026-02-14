@@ -28,7 +28,7 @@ def get_google_sheet():
     
     print(f"Buscando hoja del mes: {nombre_hoja}")
     
-    # IMPORTANTE: Aquí dejé el ID que venía en tu archivo, si cambias de Excel actualízalo
+    # Usa el ID que ya tenías configurado
     try:
         archivo = client.open_by_key("1i2bjo43U23-2wxtCBmc0jYeR3Vps5nl29cm-6lsRRjM")
         worksheet = archivo.worksheet(nombre_hoja)
@@ -79,7 +79,7 @@ def job():
         # Lógica de qué escribir en el Excel
         if "error" in resultado:
             print(f"-> Error detectado: {resultado['error']}")
-            # AQUÍ ES DONDE ESCRIBIMOS 'ERROR' EN EL EXCEL
+            # Escribir ERROR si falla la referencia
             valor_a_escribir = "ERROR"
         elif resultado["estatus"] == "PAGADO":
             valor_a_escribir = "PAGADO"

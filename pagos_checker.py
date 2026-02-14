@@ -1,4 +1,4 @@
-¡import requests
+import requests
 from bs4 import BeautifulSoup
 
 class PagosDigitalesScraper:
@@ -45,7 +45,6 @@ class PagosDigitalesScraper:
             # PASO 3: Analizar la respuesta
 
             # --- NUEVA VALIDACIÓN: ERROR DE REFERENCIA ---
-            # Si el texto contiene el mensaje de error detectado en tu archivo HAR
             if "Referencia no valida" in texto_respuesta:
                 return {"error": "Referencia no valida"}
 

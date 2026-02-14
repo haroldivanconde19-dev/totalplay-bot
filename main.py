@@ -13,7 +13,6 @@ MESES = {
 }
 
 def get_google_sheet():
-    # Carga de credenciales
     if os.environ.get("GOOGLE_CREDENTIALS"):
         creds_dict = json.loads(os.environ.get("GOOGLE_CREDENTIALS"))
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"])
@@ -22,14 +21,13 @@ def get_google_sheet():
     
     client = gspread.authorize(creds)
     
-    # Busca la pestaña del mes actual
     mes_actual_num = datetime.now().month
     nombre_hoja = MESES[mes_actual_num] 
     
     print(f"Buscando hoja del mes: {nombre_hoja}")
     
-    # Usa el ID que ya tenías configurado
     try:
+        # RECUERDA: Si cambiaste el nombre del archivo o quieres usar ID, edita esta linea
         archivo = client.open_by_key("1i2bjo43U23-2wxtCBmc0jYeR3Vps5nl29cm-6lsRRjM")
         worksheet = archivo.worksheet(nombre_hoja)
         return worksheet
@@ -44,11 +42,9 @@ def job():
 
     scraper = PagosDigitalesScraper()
     
-    # Fecha de hoy formato DD/MM/YYYY
     fecha_hoy = datetime.now().strftime("%d/%m/%Y") 
     print(f"--- Iniciando revisión para fecha: {fecha_hoy} ---")
 
-    # Leer encabezados
     encabezados = hoja.row_values(1)
     
     try:
@@ -58,10 +54,8 @@ def job():
         print(f"Error CRÍTICO: No encontré la columna '{fecha_hoy}' en la fila 1.")
         return
 
-    # Leer todas las cuentas (Columna A)
     cuentas = hoja.col_values(1) 
     
-    # Iteramos saltando el encabezado
     for i in range(1, len(cuentas)):
         referencia = str(cuentas[i]).strip()
         fila_excel = i + 1 
@@ -71,28 +65,35 @@ def job():
 
         print(f"Consultando Cuenta: {referencia} (Fila {fila_excel})")
         
-        # Consultamos a la web
+        # Consultamos (ahora con reintentos automáticos internos)
         resultado = scraper.consultar_referencia(referencia)
         
         valor_a_escribir = ""
         
-        # Lógica de qué escribir en el Excel
         if "error" in resultado:
-            print(f"-> Error detectado: {resultado['error']}")
-            # Escribir ERROR si falla la referencia
-            valor_a_escribir = "ERROR"
+            error_msg = resultado['error']
+            print(f"-> Resultado: ERROR ({error_msg})")
+            
+            if "Referencia no valida" in error_msg:
+                valor_a_escribir = "ERROR REFERENCIA"
+            else:
+                valor_a_escribir = "ERROR CONEXION" # Para diferenciar si fue culpa del servidor
+        
         elif resultado["estatus"] == "PAGADO":
             valor_a_escribir = "PAGADO"
+            print("-> Resultado: PAGADO")
         else:
-            # Tiene deuda
             valor_a_escribir = resultado["monto"]
-            
-        print(f"-> Resultado final: {valor_a_escribir}")
+            print(f"-> Resultado: DEUDA {valor_a_escribir}")
         
-        # Escribimos en la celda
         try:
             hoja.update_cell(fila_excel, columna_destino_idx, valor_a_escribir)
-            time.sleep(1.5) 
+            
+            # PAUSA AUMENTADA: 5 segundos entre cuentas para evitar Error 504
+            # Si tienes muchas cuentas y es muy lento, bájalo a 3, pero 5 es seguro.
+            print("Esperando 5s para la siguiente...")
+            time.sleep(5) 
+            
         except Exception as e:
             print(f"Error escribiendo en Excel: {e}")
 
